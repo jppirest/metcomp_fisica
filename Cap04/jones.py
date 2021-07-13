@@ -4,7 +4,7 @@ import random as rd
 import pandas as pd
 
 dt = 0.001
-t = 1000
+t = 10000
 
 n_particulas = 2
 
@@ -13,14 +13,13 @@ sigma = 1.0
 
 
 
-x = np.zeros(n_particulas)
+x = np.zeros(n_particulas, dtype = 'float')
 y = np.zeros(n_particulas)
 z = np.zeros(n_particulas)
 
 vx = np.zeros(n_particulas)
 vy = np.zeros(n_particulas)
 vz = np.zeros(n_particulas)
-
 
 def init_conditions():
     x[0] = sigma*rd.random()
@@ -40,31 +39,41 @@ def init_conditions():
     vz[1] = sigma*rd.random()
 
 
-init_conditions()
+
+#init_conditions()
+
+x[0],y[0],z[0] = 0.7,0.3,0.55
+x[1],y[1],z[1] = 2.3,1.8,1.8
+vx[0],vy[0],vz[0] = 0.1,0.1,0.1
+vx[1],vy[1],vz[1] = 0.1,0.1,0.1
 
 
 file = open('dinamica_jones.dat', "w")
 file.write('x,y,z\n')
-for i in range(0,n_particulas):
+for i in range(0,1):
     file.write(str(x) + ',' + str(y) + ',' + str(z) + '\n' )
 
 
+
+print(x,y,z)
 
 def forces(x,y,z):
     F = np.zeros((n_particulas,3))
     for i in range(0,n_particulas):
         for j in range(0,n_particulas):
             if i!=j:
-                r=np.sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2 +(z[i]-z[j])**2)
-                V=24*eps*sigma**6*(r**6-2*sigma**6)/r**13
-                F[i][0] += (x[i]-x[j])*V
-                F[i][1] += (y[i]-y[j])*V
-                F[i][2] += (z[i]-z[j])*V
+                r = np.sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2 +(z[i]-z[j])**2)
+                V = 24*eps*(2*(sigma/r)**12-(sigma/r)**6)/r
+                F[i][0] += (x[i]-x[j])*V/r
+                F[i][1] += (y[i]-y[j])*V/r
+                F[i][2] += (z[i]-z[j])*V/r
     return F
 
+
+
 def move(x,y,z,vx,vy,vz):
+    F = forces(x,y,z)
     for i in range(0,n_particulas):
-        F = forces(x,y,z)
         vx[i] = vx[i]+dt*F[i][0]
         vy[i] = vy[i]+dt*F[i][1]
         vz[i] = vz[i]+dt*F[i][2]
@@ -75,12 +84,11 @@ def move(x,y,z,vx,vy,vz):
     file.write(str(x) + ',' + str(y) + ',' + str(z) + '\n' )
 
 def run():
-    for i in range(0,t):
+    for i in range(0,t+1):
         move(x,y,z,vx,vy,vz)
 run()
 
 file.close()
-
 
 
 data = pd.read_csv('dinamica_jones.dat', header = 0)
@@ -126,4 +134,12 @@ ax.scatter(xparticula1[0],yparticula1[0],zparticula1[0], color = 'black')
 ax.scatter(xparticula2[0],yparticula2[0],zparticula2[0], color = 'black')
 ax.plot(xparticula1,yparticula1,zparticula1, color = 'red')
 ax.plot(xparticula2,yparticula2,zparticula2, color = 'blue')
+plt.show()
+
+
+fig, ax = plt.subplots()
+ax.plot(xparticula1,yparticula1, color = 'red')
+ax.plot(xparticula2,yparticula2, color = 'blue')
+plt.xlim(0,3.8)
+plt.ylim(0,2.8)
 plt.show()
