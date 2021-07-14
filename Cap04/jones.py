@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random as rd
 import pandas as pd
+import matplotlib.animation as animation
+import matplotlib.patches as mpatches
 
 dt = 0.001
 t = 10000
@@ -13,13 +15,14 @@ sigma = 1.0
 
 
 
-x = np.zeros(n_particulas, dtype = 'float')
+x = np.zeros(n_particulas)
 y = np.zeros(n_particulas)
 z = np.zeros(n_particulas)
 
 vx = np.zeros(n_particulas)
 vy = np.zeros(n_particulas)
 vz = np.zeros(n_particulas)
+
 
 def init_conditions():
     x[0] = sigma*rd.random()
@@ -40,36 +43,33 @@ def init_conditions():
 
 
 
-#init_conditions()
-
-x[0],y[0],z[0] = 0.7,0.3,0.55
-x[1],y[1],z[1] = 2.3,1.8,1.8
-vx[0],vy[0],vz[0] = 0.1,0.1,0.1
-vx[1],vy[1],vz[1] = 0.1,0.1,0.1
+init_conditions()
 
 
 file = open('dinamica_jones.dat', "w")
 file.write('x,y,z\n')
-for i in range(0,1):
+
+for i in range(0,n_particulas):
     file.write(str(x) + ',' + str(y) + ',' + str(z) + '\n' )
 
-
-
-print(x,y,z)
+for i in range(0,n_particulas):
+    nome = 'particula' + str(i) + '.dat'
+    arquivo = open(nome, "w")
+    arquivo.write('x,y,z\n')
+    arquivo.write(str(x[i]) + ',' + str(y[i]) + ',' + str(z[i]) + '\n' )
+    arquivo.close()
 
 def forces(x,y,z):
     F = np.zeros((n_particulas,3))
     for i in range(0,n_particulas):
         for j in range(0,n_particulas):
             if i!=j:
-                r = np.sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2 +(z[i]-z[j])**2)
-                V = 24*eps*(2*(sigma/r)**12-(sigma/r)**6)/r
+                r=np.sqrt((x[i]-x[j])**2 +(y[i]-y[j])**2 +(z[i]-z[j])**2)
+                V=24*eps*((sigma/r)**12-(sigma/r)**6)/r
                 F[i][0] += (x[i]-x[j])*V/r
                 F[i][1] += (y[i]-y[j])*V/r
                 F[i][2] += (z[i]-z[j])*V/r
     return F
-
-
 
 def move(x,y,z,vx,vy,vz):
     F = forces(x,y,z)
@@ -81,65 +81,73 @@ def move(x,y,z,vx,vy,vz):
         x[i]=x[i] + vx[i]*dt
         y[i]=y[i] + vy[i]*dt
         z[i]=z[i] + vz[i]*dt
+        nome = 'particula' + str(i) + '.dat'
+        arquivo = open(nome, "a")
+        arquivo.write(str(x[i]) + ',' + str(y[i]) + ',' + str(z[i]) + '\n' )
+        arquivo.close()
     file.write(str(x) + ',' + str(y) + ',' + str(z) + '\n' )
 
+
+
 def run():
-    for i in range(0,t+1):
+    for i in range(0,t):
         move(x,y,z,vx,vy,vz)
 run()
 
 file.close()
 
+particulas = []
+for x in range(0, n_particulas):
+    globals()[f"particula{x}"] = pd.read_csv("particula"  + f"{x}" ".dat" , header = 0)
+    particulas.append(globals()[f"particula{x}"])
 
-data = pd.read_csv('dinamica_jones.dat', header = 0)
-
-a = data['x'][0:]
-
-xparticula1 = []
-xparticula2 = []
-for element in a:
-    element = element.replace('[','')
-    element = element.replace(']','')
-    elementos = element.split()
-    xparticula1.append(float(elementos[0]))
-    xparticula2.append(float(elementos[1]))
-
-b = data['y'][0:]
-
-yparticula1 = []
-yparticula2 = []
-for element in b:
-    element = element.replace('[','')
-    element = element.replace(']','')
-    elementos = element.split()
-    yparticula1.append(float(elementos[0]))
-    yparticula2.append(float(elementos[1]))
+#print(particulas[0])
+def plot3d():
+    fig=plt.figure()
+    ax=fig.gca(projection ='3d')
+    for i in particulas:
+        ax.plot(i['x'],i['y'],i['z'])
+        ax.scatter(i['x'][0],i['y'][0],i['z'][0], color = 'black')
+        ax.scatter(i['x'][len(i)-1],i['y'][len(i)-1],i['z'][len(i)-1], color = 'red')
+    ax.scatter(i['x'][0],i['y'][0],i['z'][0], color = 'black', label = 'Inicial')
+    ax.scatter(i['x'][len(i)-1],i['y'][len(i)-1],i['z'][len(i)-1], color = 'red', label = 'Final')
+    plt.legend()
+    plt.show()
 
 
-c = data['y'][0:]
+particula0 = pd.read_csv('particula0.dat', header = 0)
+particula1 = pd.read_csv('particula1.dat', header = 0)
+particula2 = pd.read_csv('particula2.dat', header = 0)
 
-zparticula1 = []
-zparticula2 = []
-for element in b:
-    element = element.replace('[','')
-    element = element.replace(']','')
-    elementos = element.split()
-    zparticula1.append(float(elementos[0]))
-    zparticula2.append(float(elementos[1]))
+def animacao( show=False,save=False):
+    xp0 = particula0['x'].tolist()
+    yp0 = particula0['y'].tolist()
+    zp0 = particula0['z'].tolist()
 
+    xp1 = particula1['x'].tolist()
+    yp1 = particula1['y'].tolist()
+    zp1 = particula1['z'].tolist()
 
-fig=plt.figure()
-ax=fig.gca(projection ='3d')
-ax.scatter(xparticula1[0],yparticula1[0],zparticula1[0], color = 'black')
-ax.scatter(xparticula2[0],yparticula2[0],zparticula2[0], color = 'black')
-ax.plot(xparticula1,yparticula1,zparticula1, color = 'red')
-ax.plot(xparticula2,yparticula2,zparticula2, color = 'blue')
-plt.show()
+    fig=plt.figure()
+    ax=fig.gca(projection ='3d')
+    ax.set_xlim(-10,10)
+    ax.set_ylim(-10,10)
+    ax.set_zlim(-10,10)
+    lines = []
+    i = 1
+    for i in range(t):
+        head = i - 1
+        line2, = ax.plot([xp0[head]],[yp0[head]], [zp0[head]], color = 'red', marker = 'o', markersize = 15, markeredgecolor = 'r', zorder = 20)
+        line4, = ax.plot([xp1[head]],[yp1[head]], [zp1[head]], color = 'blue', marker = 'o', markersize = 15, markeredgecolor = 'blue', zorder = 20)
+        lines.append([line2,line4])
+    FFwriter = animation.FFMpegWriter(fps=60)
+    anim = animation.ArtistAnimation(fig,lines,interval=1, blit = True)
 
+    plt.rcParams['animation.html'] = 'html5'
 
-fig, ax = plt.subplots()
-ax.plot(xparticula1,yparticula1, color = 'red')
-ax.plot(xparticula2,yparticula2, color = 'blue')
-plt.xlim(0,3.8)
-plt.ylim(0,2.8)
-plt.show()
+    if show:
+        plt.show()
+    if save:
+        anim.save('lennard-jones.mp4', writer = FFwriter, dpi = 200)
+#plot3d()
+animacao(show=True,save=True)
