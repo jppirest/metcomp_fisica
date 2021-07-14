@@ -117,7 +117,7 @@ def plot3d():
 
 particula0 = pd.read_csv('particula0.dat', header = 0)
 particula1 = pd.read_csv('particula1.dat', header = 0)
-particula2 = pd.read_csv('particula2.dat', header = 0)
+
 
 def animacao( show=False,save=False):
     xp0 = particula0['x'].tolist()
@@ -130,12 +130,12 @@ def animacao( show=False,save=False):
 
     fig=plt.figure()
     ax=fig.gca(projection ='3d')
-    ax.set_xlim(-10,10)
-    ax.set_ylim(-10,10)
-    ax.set_zlim(-10,10)
+    ax.set_xlim(-7,7)
+    ax.set_ylim(-7,7)
+    ax.set_zlim(-7,7)
     lines = []
     i = 1
-    for i in range(t):
+    for i in range(5000):
         head = i - 1
         line2, = ax.plot([xp0[head]],[yp0[head]], [zp0[head]], color = 'red', marker = 'o', markersize = 15, markeredgecolor = 'r', zorder = 20)
         line4, = ax.plot([xp1[head]],[yp1[head]], [zp1[head]], color = 'blue', marker = 'o', markersize = 15, markeredgecolor = 'blue', zorder = 20)
@@ -150,4 +150,4 @@ def animacao( show=False,save=False):
     if save:
         anim.save('lennard-jones.mp4', writer = FFwriter, dpi = 200)
 #plot3d()
-animacao(show=True,save=True)
+animacao(show=True)
